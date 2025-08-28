@@ -52,8 +52,7 @@ routes.get('/count', async (req, res) => {
         const vendas = await client.query('SELECT COUNT(*) FROM vendas')
         const vendas_pagas = await client.query('SELECT COUNT(*) FROM vendas WHERE pagA = TRUE')
         const vendas_nao_pagas = await client.query('SELECT COUNT(*) FROM vendas WHERE paga = FALSE')
-        const faturamento = await client.query('SELECT SUM(preco) AS total FROM vendas WHERE paga = TRUE');
-
+        const faturamento = await client.query('SELECT COALESCE(SUM(preco::numeric), 0) AS total FROM vendas WHERE paga = TRUE;');
 
         res.json({
             clientes: clientes.rows[0].count,
@@ -74,7 +73,7 @@ routes.get('/count', async (req, res) => {
 routes.get('/select_cliente', async (req,res) => {
     const client = await db.connect();
     try{
-        const clientes = await client.query('SELECT nome_cliente, telefone FROM clientes')
+        const clientes = await client.query('SELECT id_cliente,nome_cliente, telefone FROM clientes')
 
         res.json({
             clientes: clientes.rows
@@ -87,42 +86,70 @@ routes.get('/select_cliente', async (req,res) => {
     }
 })
 
-// routes.post('/add_cliente', async(req,res) => {
-//     const {nome_cliente, telefone_cliente} = req.body
+routes.post('/add_cliente', async(req,res) => {
+    const {nome_cliente, telefone_cliente} = req.body
 
-//     if(!nome_cliente || !telefone_cliente){
-//         return res.status(400).json({error: 'Campos obrigatórios não preenchidos'})
-//     }
+    if(!nome_cliente || !telefone_cliente){
+        return res.status(400).json({error: 'Campos obrigatórios não preenchidos'})
+    }
 
-//     const client = await db.connect();
+    const client = await db.connect();
 
-//     try{
-//         await client.execute('INSERT INTO clientes (nome_cliente,telefone) VALUES ($1, $2)',
-//         [nome_cliente, telefone_cliente])
+    try{
+        await client.query('INSERT INTO clientes (nome_cliente,telefone,inserted_at) VALUES ($1, $2,NOW())',
+        [nome_cliente, telefone_cliente])
 
-//         return res.status(200).json({mensagem: 'Cliente registrado com sucesso!'})
-//     }catch(error){
-//         console.error(error)
-//         return res.status(500),json({error: 'Erro interno no servidor, por favor tente novamente.'})
-//     }finally {
-//         client.release() 
-//     }
-// })
+        return res.status(200).json({mensagem: 'Cliente registrado com sucesso!'})
+    }catch(error){
+        console.error(error)
+        return res.status(500).json({error: 'Erro interno no servidor, por favor tente novamente.'})
+    }finally {
+        client.release() 
+    }
+})
+
+routes.delete('delete_cliente', async(req,res) => {
+    const{id_cliente} = req.body
+
+    if(!id_cliente){
+        return res.status(400).json({error: 'Id de cliente não encontrado'})
+    }
+
+    const client = await db.connect()
+
+    try{
+        await client.query('DELETE FROM clientes WHERE id_cliente = $1',
+            [id_cliente]
+        )
+
+        return res.status(201).json({mensagem:'Cliente deletado com sucesso!'})
+    }catch(error){
+        console.error(error)
+        return res.status(500).json({error: 'Erro interno no servidor, por favor tente novamente.'})
+    }finally{
+        client.release()
+    }
+})
 
 //Vendas
 routes.get('/select_vendas', async (req, res) => {
   const client = await db.connect();
   try {
     const resultado = await client.query(`
-      SELECT 
-        vendas.id_cliente,
-        vendas.preco,
-        vendas.descricao,
-        clientes.nome_cliente
-      FROM 
-        vendas
-      INNER JOIN 
-        clientes ON vendas.id_cliente = clientes.id_cliente
+        SELECT 
+            vendas.id_cliente,
+            vendas.preco,
+            vendas.descricao,
+            CASE 
+                WHEN vendas.paga = TRUE THEN 'Sim'
+                ELSE 'Não'
+            END AS paga,
+            clientes.nome_cliente
+        FROM 
+            vendas
+        INNER JOIN 
+            clientes ON vendas.id_cliente = clientes.id_cliente
+        ORDER BY vendas.preco DESC;
     `);
 
     res.json({ vendas: resultado.rows });
