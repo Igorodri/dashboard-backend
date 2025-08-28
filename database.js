@@ -1,16 +1,10 @@
-const { Client } = require("pg");
-require("dotenv").config();
 
-async function getClient() {
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false
-    }
-  });
+const {Pool} = require("pg")
+require("dotenv").config()
 
-  await client.connect();
-  return client;
-}
 
-module.exports = getClient;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+})
+
+module.exports = pool
