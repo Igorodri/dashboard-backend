@@ -108,28 +108,26 @@ routes.post('/add_cliente', async(req,res) => {
     }
 })
 
-routes.delete('delete_cliente', async(req,res) => {
-    const{id_cliente} = req.body
+routes.delete('/delete_cliente/:id_cliente', async (req,res) => {
+    const { id_cliente } = req.params;
 
     if(!id_cliente){
-        return res.status(400).json({error: 'Id de cliente não encontrado'})
+        return res.status(400).json({error: 'Id de cliente não encontrado'});
     }
 
-    const client = await db.connect()
+    const client = await db.connect();
 
-    try{
-        await client.query('DELETE FROM clientes WHERE id_cliente = $1',
-            [id_cliente]
-        )
-
-        return res.status(201).json({mensagem:'Cliente deletado com sucesso!'})
-    }catch(error){
-        console.error(error)
-        return res.status(500).json({error: 'Erro interno no servidor, por favor tente novamente.'})
-    }finally{
-        client.release()
+    try {
+        await client.query('DELETE FROM clientes WHERE id_cliente = $1', [id_cliente]);
+        return res.status(200).json({mensagem:'Cliente deletado com sucesso!'});
+    } catch(error) {
+        console.error(error);
+        return res.status(500).json({error: 'Erro interno no servidor, por favor tente novamente.'});
+    } finally {
+        client.release();
     }
-})
+});
+
 
 //Vendas
 routes.get('/select_vendas', async (req, res) => {
