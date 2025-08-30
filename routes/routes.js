@@ -1,6 +1,7 @@
 const express = require('express')
 const jwt = require('jsonwebtoken')
 const db = require('../database.js')
+const { parse } = require('dotenv')
 require("dotenv").config()
 
 const routes = express()
@@ -73,7 +74,7 @@ routes.get('/count', async (req, res) => {
 routes.get('/select_cliente', async (req,res) => {
     const client = await db.connect();
     try{
-        const clientes = await client.query('SELECT id_cliente,nome_cliente, telefone FROM clientes')
+        const clientes = await client.query('SELECT id_cliente,nome_cliente,telefone FROM clientes')
 
         res.json({
             clientes: clientes.rows
@@ -128,6 +129,26 @@ routes.delete('/delete_cliente/:id_cliente', async (req,res) => {
     }
 });
 
+routes.put('    ', async (req,res) => {
+    const { id_cliente, nome_cliente, telefone_cliente } = req.params;
+
+    if(!id_cliente, !nome_cliente, !telefone_cliente){
+        return res.status(400).json({error: 'Id de cliente não encontrado'});
+    }
+
+    const client = await db.connect();
+
+    try {
+        await client.query('UPDATE SET nome_cliente = $1, telefone_cliente = $2 WHERE id_cliente = $3', [nome_cliente, telefone_cliente, id_cliente]);
+        return res.status(200).json({mensagem:'Cliente editado com sucesso!'});
+    } catch(error) {
+        console.error(error);
+        return res.status(500).json({error: 'Erro interno no servidor, por favor tente novamente.'});
+    } finally {
+        client.release();
+    }
+})
+
 
 //Vendas
 routes.get('/select_vendas', async (req, res) => {
@@ -135,6 +156,7 @@ routes.get('/select_vendas', async (req, res) => {
   try {
     const resultado = await client.query(`
         SELECT 
+            vendas.id_venda,
             vendas.id_cliente,
             vendas.preco,
             vendas.descricao,
@@ -158,5 +180,42 @@ routes.get('/select_vendas', async (req, res) => {
     client.release();
   }
 });
+
+routes.post('/pagar/:id_venda', async(req,res) => {
+    const {id_venda} = req.params;
+    if(!id_venda){
+        return res.status(400).json({error:'Id de venda não preenchido'})
+    }
+     const client = await db.connect()
+
+    try{
+       await client.query('UPDATE vendas SET paga = TRUE WHERE id_venda = $1', [id_venda])
+       return res.status(200).json({mensagem:'Venda paga com sucesso!'})
+    }catch(error){
+        console.error(error);
+        return res.status(500).json({error: 'Erro interno no servidor, por favor tente novamente.'});
+    }finally{
+        client.release()
+    }
+})
+
+routes.post('/cancelarpagamento/:id_venda', async(req,res) => {
+    const {id_venda} = req.params;
+    if(!id_venda){
+        return res.status(400).json({error:'Id de venda não preenchido'})
+    }
+     const client = await db.connect()
+
+    try{
+       await client.query('UPDATE vendas SET paga = FALSE WHERE id_venda = $1', [id_venda])
+       return res.status(200).json({mensagem:'Venda cancelada com sucesso!'})
+    }catch(error){
+        console.error(error);
+        return res.status(500).json({error: 'Erro interno no servidor, por favor tente novamente.'});
+    }finally{
+        client.release()
+    }
+})
+
 
 module.exports = routes
