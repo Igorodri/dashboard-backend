@@ -129,17 +129,20 @@ routes.delete('/delete_cliente/:id_cliente', async (req,res) => {
     }
 });
 
-routes.put('    ', async (req,res) => {
-    const { id_cliente, nome_cliente, telefone_cliente } = req.params;
+routes.put('/edit_cliente/:id_cliente', async (req,res) => {
+    const {id_cliente} = req.params;
+    const {nome_cliente, telefone_cliente} = req.body;
 
     if(!id_cliente, !nome_cliente, !telefone_cliente){
         return res.status(400).json({error: 'Id de cliente não encontrado'});
     }
 
+    console.log(id_cliente, nome_cliente, telefone_cliente)
+
     const client = await db.connect();
 
     try {
-        await client.query('UPDATE SET nome_cliente = $1, telefone_cliente = $2 WHERE id_cliente = $3', [nome_cliente, telefone_cliente, id_cliente]);
+        await client.query('UPDATE clientes SET nome_cliente = $1, telefone = $2 WHERE id_cliente = $3', [nome_cliente, telefone_cliente, id_cliente]);
         return res.status(200).json({mensagem:'Cliente editado com sucesso!'});
     } catch(error) {
         console.error(error);
@@ -181,6 +184,28 @@ routes.get('/select_vendas', async (req, res) => {
   }
 });
 
+routes.post('/add_venda', async(req,res) => {
+    const{id_cliente,descricao,preco} = req.body
+
+    if(!id_cliente || !descricao ||preco){
+        return res.status(400).json({error: 'Campos não preenchidos'})
+    }
+
+    const client = await db.connect()
+
+    try{
+        await client.query('INSERT INTO vendas(id_cliente,preco,created_at,descricao,paga) VALUES ($1,$2,NOW(),$3,FALSE)', [id_cliente,preco,descricao ])
+
+        return res.status(200).json({mensagem: 'Venda inserida com sucesso'})
+    }catch(error){
+        console.error(error);
+        return res.status(500).json({ error: 'Erro interno no servidor, por favor tente novamente.' });
+    }finally{
+        client.release()
+    }
+})
+
+//Pagar
 routes.post('/pagar/:id_venda', async(req,res) => {
     const {id_venda} = req.params;
     if(!id_venda){
@@ -199,6 +224,7 @@ routes.post('/pagar/:id_venda', async(req,res) => {
     }
 })
 
+//Cancelar Pagamento
 routes.post('/cancelarpagamento/:id_venda', async(req,res) => {
     const {id_venda} = req.params;
     if(!id_venda){
