@@ -205,6 +205,47 @@ routes.post('/add_venda', async(req,res) => {
     }
 })
 
+routes.delete('/delete_venda/:id_venda', async (req,res) => {
+    const {id_venda} = req.params
+
+    if(!id_venda){
+        return res.status(400).json({error: 'Id_venda não localizado'})
+    }
+
+    const client = await db.connect()
+
+    try{
+        await client.query('DELETE FROM vendas WHERE id_venda = $1 AND paga = FALSE', [id_venda])
+
+        return res.status(200).json({mensagem: 'Venda deletada com sucesso!'})
+    }catch(error){
+        console.error(error);
+        return res.status(500).json({ error: 'Erro interno no servidor, por favor tente novamente.' });
+    }finally{
+        client.release()
+    }
+})
+
+routes.put('/edit_venda/:id_venda', async (req,res) => {
+    const {id_venda} = req.params
+    const {nome_cliente, descricao, preco} = req.body
+
+    if(!id_venda || !nome_cliente || !descricao ||!preco){
+        return res.status(400).json({error: 'Campos não preenchidos'})
+    }
+
+    const client = await db.connect()
+
+    try{
+        await client.query('UPDATE')
+    }catch(error){
+        console.error(error);
+        return res.status(500).json({ error: 'Erro interno no servidor, por favor tente novamente.' });
+    }finally{
+        client.release()
+    }
+})
+
 //Pagar
 routes.post('/pagar/:id_venda', async(req,res) => {
     const {id_venda} = req.params;
@@ -245,3 +286,5 @@ routes.post('/cancelarpagamento/:id_venda', async(req,res) => {
 
 
 module.exports = routes
+
+
