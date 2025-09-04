@@ -187,7 +187,7 @@ routes.get('/select_vendas', async (req, res) => {
 routes.post('/add_venda', async(req,res) => {
     const{id_cliente,descricao,preco} = req.body
 
-    if(!id_cliente || !descricao ||preco){
+    if(!id_cliente || !descricao || !preco){
         return res.status(400).json({error: 'Campos não preenchidos'})
     }
 
