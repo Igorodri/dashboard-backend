@@ -226,26 +226,30 @@ routes.delete('/delete_venda/:id_venda', async (req,res) => {
     }
 })
 
-routes.put('/edit_venda/:id_venda', async (req,res) => {
-    const {id_venda} = req.params
-    const {nome_cliente, descricao, preco} = req.body
+routes.put('/edit_venda/:id_venda', async (req, res) => {
+    const { id_venda } = req.params;
+    const { id_cliente, descricao, preco } = req.body;
 
-    if(!id_venda || !nome_cliente || !descricao ||!preco){
-        return res.status(400).json({error: 'Campos não preenchidos'})
+    if (!id_venda || !id_cliente || !descricao || !preco) {
+        return res.status(400).json({ error: 'Campos não preenchidos' });
     }
 
-    const client = await db.connect()
+    const client = await db.connect();
 
-    try{
-        await client.query('UPDATE')
-    }catch(error){
+    try {
+        await client.query(
+            'UPDATE vendas SET id_cliente = $1, descricao = $2, preco = $3 WHERE id_venda = $4',
+            [id_cliente, descricao, preco, id_venda]
+        );
+
+        return res.status(200).json({ mensagem: 'Venda atualizada com sucesso!' });
+    } catch (error) {
         console.error(error);
         return res.status(500).json({ error: 'Erro interno no servidor, por favor tente novamente.' });
-    }finally{
-        client.release()
+    } finally {
+        client.release();
     }
-})
-
+});
 //Pagar
 routes.post('/pagar/:id_venda', async(req,res) => {
     const {id_venda} = req.params;
