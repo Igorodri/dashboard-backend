@@ -5,7 +5,7 @@ const routes = require('./routes/routes.js');
 const app = express();  
 
 const corsOptions = {
-    origin: ['https://dashboard-gilt-iota.vercel.app'],  
+    origin: ['https://dashboard-frontend-7jr3.onrender.com'],  
     credentials: true
 };
 
