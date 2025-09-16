@@ -16,5 +16,5 @@ app.use(express.json());
 app.use('/', routes); 
 
 app.listen(3000, () => {
-    console.log("Servidor Rodando na porta: https://dashboard-backend-gules.vercel.app");
+    console.log("Servidor Rodando na porta: http://localhost:3000");
 });
