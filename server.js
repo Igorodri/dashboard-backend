@@ -5,7 +5,7 @@ const routes = require('./routes/routes.js');
 const app = express();  
 
 const corsOptions = {
-    origin: ['http://localhost:5173'],  
+    origin: ['https://dashboard-gilt-iota.vercel.app'],  
     credentials: true
 };
 
@@ -16,5 +16,5 @@ app.use(express.json());
 app.use('/', routes); 
 
 app.listen(3000, () => {
-    console.log("Servidor Rodando na porta: http://localhost:3000");
+    console.log("Servidor Rodando na porta: https://dashboard-backend-gules.vercel.app");
 });
