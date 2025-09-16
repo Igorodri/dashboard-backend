@@ -175,7 +175,7 @@ routes.get('/select_vendas', async (req, res) => {
         ORDER BY vendas.preco DESC;
     `);
 
-    res.json({ vendas: resultado.rows });
+    return res.json({ vendas: resultado.rows });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Erro interno no servidor, por favor tente novamente.' });
@@ -287,6 +287,71 @@ routes.post('/cancelarpagamento/:id_venda', async(req,res) => {
         client.release()
     }
 })
+
+
+//Financeiro
+
+routes.get('/select_economias', async (req, res) => {
+  const client = await db.connect()
+  try {
+    const resultado = await client.query(`
+      SELECT SUM(dinheiro) AS total FROM financeiro
+    `)
+
+    return res.json({ economias: resultado.rows[0].total })
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ error: 'Erro interno no servidor, por favor tente novamente.' })
+  } finally {
+    client.release()
+  }
+})
+
+// Adicionar valor
+routes.post('/add_economia', async (req, res) => {
+  const { valor } = req.body;
+  const client = await db.connect();
+
+  try {
+    if (!valor || isNaN(valor)) {
+      return res.status(400).json({ error: 'Valor inválido' });
+    }
+
+    await client.query(`
+      INSERT INTO financeiro (dinheiro) VALUES ($1)
+    `, [valor]);
+
+    return res.json({ message: 'Valor adicionado com sucesso!' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro interno no servidor, por favor tente novamente.' });
+  } finally {
+    client.release();
+  }
+});
+
+// Remover valor
+routes.post('/remove_economia', async (req, res) => {
+  const { valor } = req.body;
+  const client = await db.connect();
+
+  try {
+    if (!valor || isNaN(valor)) {
+      return res.status(400).json({ error: 'Valor inválido' });
+    }
+
+    await client.query(`
+      INSERT INTO financeiro (dinheiro) VALUES ($1)
+    `, [-valor]);
+
+    return res.json({ message: 'Valor removido com sucesso!' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro interno no servidor, por favor tente novamente.' });
+  } finally {
+    client.release();
+  }
+});
 
 
 module.exports = routes
